@@ -1,0 +1,23 @@
+{
+  "name": "web-zip-stream",
+  "version": "0.0.1",
+  "description": "generate readable and writable zip stream from the browser ",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aNulliHate/web-zip-stream.git"
+  },
+  "keywords": [
+    "web-stream",
+    "zip"
+  ],
+  "author": "anullihate",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/aNulliHate/web-zip-stream/issues"
+  },
+  "homepage": "https://github.com/aNulliHate/web-zip-stream#readme"
+}
