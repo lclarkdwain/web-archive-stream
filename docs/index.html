@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="utf-8">
+    <title></title>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/web-streams-polyfill@2.0.2/dist/polyfill.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/streamsaver@2.0.3/StreamSaver.min.js"></script>
+<script type="module">
+    import WebZipStream from 'https://cdn.jsdelivr.net/npm/@trd-clarkdwain/web-zip-stream@1.0.0/src/index.min.js'
+    window.download = function download() {
+        const fileStream = streamSaver.createWriteStream('web-zip-stream.zip');
+        const inputFileElement = document.getElementById('input');
+        const fileList = [...inputFileElement.files];
+        if (fileList.length === 0) return false;
+
+        const zip = new WebZipStream();
+
+        for (let file of fileList) {
+            zip.file(file);
+        }
+
+        zip.pipe(fileStream)
+    }
+</script>
+<div>
+    <h3>WEB ZIP STREAM</h3>
+    <input type="file" id="input" multiple> <br><br>
+    <button onclick="download()">download</button>
+</div>
+<script type="module">
+    import WebZipStream from '../src/index.js'
+    const webZipStream = new WebZipStream();
+    const fileStream = streamSaver.createWriteStream('web-zip-stream.zip');
+    const archive = webZipStream.archiver();
+    archive.pipe(fileStream)
+</script>
+</body>
+</html>
