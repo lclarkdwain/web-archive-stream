@@ -1,10 +1,6 @@
 function createArrayBuffer(value, size) { // handler
     const arrayBuffer = new Uint8Array(size);
     const dataView = new DataView(arrayBuffer.buffer);
-    if (Array.isArray(value)) {
-        arrayBuffer.set(value, 0);
-        return arrayBuffer
-    }
     switch (size) {
         case 1:
             dataView.setInt8(0, parseInt(value));
@@ -50,5 +46,15 @@ BinaryWriter.prototype = {
         const arrayBuffer = createArrayBuffer(value, 8);
         this.arrayBuffer = new Uint8Array([...this.arrayBuffer, ...arrayBuffer]);
         return this
+    },
+    writeBytes(value) {
+        const size = value.length;
+        const arrayBuffer = new Uint8Array(size);
+        arrayBuffer.set(value, 0);
+        this.arrayBuffer = new Uint8Array([...this.arrayBuffer, ...arrayBuffer]);
+        return this
+    },
+    get size() {
+        return this.arrayBuffer.length
     }
 };
