@@ -1,7 +1,8 @@
 import Archiver from './archiver.js'
 
-function WebZipStream() {
+function WebZipStream(type) {
     // WebZipStream API
+    this.type = type
 }
 
 WebZipStream.prototype.archiver = function(options) {

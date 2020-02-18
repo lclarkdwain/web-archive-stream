@@ -15,26 +15,26 @@
         const fileList = [...inputFileElement.files];
         if (fileList.length === 0) return false;
 
-        const zip = new WebZipStream();
+        const archive = new WebZipStream('zip').archiver();
 
         for (let file of fileList) {
-            zip.file(file);
+            archive.file(file);
         }
 
-        zip.pipe(fileStream)
+        archive.pipe(fileStream)
     }
 </script>
 <div>
-    <h3>WEB ZIP STREAM</h3>
+    <h3>WEB ARCHIVE STREAM</h3>
     <input type="file" id="input" multiple> <br><br>
     <button onclick="download()">download</button>
 </div>
-<script type="module">
-    import WebZipStream from '../src/index.js'
-    const webZipStream = new WebZipStream();
-    const fileStream = streamSaver.createWriteStream('web-zip-stream.zip');
-    const archive = webZipStream.archiver();
-    archive.pipe(fileStream)
-</script>
+<!--<script type="module">-->
+    <!--import WebZipStream from '../src/index.js'-->
+    <!--const webZipStream = new WebZipStream('zip');-->
+    <!--const fileStream = streamSaver.createWriteStream('web-zip-stream.zip');-->
+    <!--const archive = webZipStream.archiver();-->
+    <!--archive.pipe(fileStream)-->
+<!--</script>-->
 </body>
 </html>

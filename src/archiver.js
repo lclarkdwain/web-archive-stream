@@ -12,13 +12,12 @@ Archiver.prototype.file = function(file) {
 Archiver.prototype.pipe = function(fileStream) {
     const zipStream = new ZipStream();
     const writer = zipStream.writable.getWriter();
-    for (const i in Array.from(Array(2).keys())) {
-        writer.write(new File(["foo--" + i], i + "-foo.txt", {
-            type: "text/plain"
-        }))
+    for (const file of this.files) {
+        writer.write(file)
     }
     zipStream.readable.pipeTo(fileStream);
-    writer.close()
+    writer.close();
+    this.files = []
 };
 
 export default Archiver

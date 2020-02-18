@@ -1,2 +1,2 @@
-# web-zip-stream
-generate readable and writable zip stream from the browser
+# web-archive-stream
+generate readable and writable archive file stream from the browser
