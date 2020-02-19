@@ -1,6 +1,6 @@
 import Crc32 from './crc32.js'
 import constants from './constants.js'
-import { BinaryWriter } from './binary-util.js'
+import BinaryStream from '../util/binary-stream.js'
 import { getDateTimeDOS } from './util.js'
 
 const textEncoder = new TextEncoder();
@@ -32,11 +32,11 @@ ZipTransformer.prototype = {
             get isZip64() {
                 return this.compressedSize > constants.ZIP64_MAGIC || this.size > constants.ZIP64_MAGIC
             },
-            extra: new BinaryWriter().arrayBuffer
+            extra: new Uint8Array(0)
 
         };
         // LOCAL FILE HEADER
-        const localFileHeader = new BinaryWriter()
+        const localFileHeader = new BinaryStream()
             .writeInt32(constants.SIG_LFH)
             .writeInt16(0x002D)
             .writeInt16(0x0808)
@@ -48,8 +48,10 @@ ZipTransformer.prototype = {
             .writeInt16(nameBuffer.length)
             .writeInt16(0)
             .writeBytes(nameBuffer)
-            .writeBytes(this.entry.extra);
-        ctrl.enqueue(localFileHeader.arrayBuffer);
+            .writeBytes(this.entry.extra)
+            .getByteArray();
+        ctrl.enqueue(localFileHeader);
+        this.offset += BigInt(localFileHeader.length);
         // FILE DATA
         if (entry.stream) {
             const reader = entry.stream().getReader();
@@ -63,7 +65,7 @@ ZipTransformer.prototype = {
             }
         }
         // DATA DESCRIPTOR
-        const dataDescriptor = new BinaryWriter()
+        let dataDescriptor = new BinaryStream()
             .writeInt32(constants.SIG_DD)
             .writeInt32(this.entry.crc.get());
         if (this.entry.isZip64) {
@@ -75,13 +77,9 @@ ZipTransformer.prototype = {
                 .writeInt32(this.entry.compressedSize)
                 .writeInt32(this.entry.size);
         }
-        ctrl.enqueue(dataDescriptor.arrayBuffer);
-
-        this.offset += [
-            localFileHeader.size,
-            this.entry.size,
-            dataDescriptor.size
-        ].reduce((acc, curr) => acc + BigInt(curr), BigInt(0));
+        dataDescriptor = dataDescriptor.getByteArray();
+        ctrl.enqueue(dataDescriptor);
+        this.offset += this.entry.size + BigInt(dataDescriptor.length)
     },
     flush(ctrl) {
         // CENTRAL DIRECTORY FILE HEADER
@@ -97,15 +95,15 @@ ZipTransformer.prototype = {
                 size = constants.ZIP64_MAGIC;
                 compressedSize = constants.ZIP64_MAGIC;
 
-                const createZip64ExtraField = new BinaryWriter()
+                const createZip64ExtraField = new BinaryStream()
                     .writeInt16(constants.ZIP64_EXTRA_ID)
                     .writeInt16(24)
                     .writeBigInt64(entry.size) // 8
                     .writeBigInt64(entry.compressedSize)
                     .writeBigInt64(entry.offset);
-                entry.extra = createZip64ExtraField.arrayBuffer
+                entry.extra = createZip64ExtraField.getByteArray()
             }
-            const centralDirectoryFileHeader = new BinaryWriter()
+            const centralDirectoryFileHeader = new BinaryStream()
                 .writeInt32(constants.SIG_CFH)
                 .writeInt16(0x002D)
                 .writeInt16(0x002D)
@@ -123,15 +121,16 @@ ZipTransformer.prototype = {
                 .writeInt32(0x00000000)
                 .writeInt32(fileOffset)
                 .writeBytes(entry.nameBuffer)
-                .writeBytes(entry.extra);
-            ctrl.enqueue(centralDirectoryFileHeader.arrayBuffer);
-            this.offset += BigInt(centralDirectoryFileHeader.size);
+                .writeBytes(entry.extra)
+                .getByteArray();
+            ctrl.enqueue(centralDirectoryFileHeader);
+            this.offset += BigInt(centralDirectoryFileHeader.length);
             }.bind(this));
         this.centralSize = this.offset - this.centralOffset;
         // ZIP64 END OF CENTRAL DIRECTORY RECORD / LOCATOR
         if (this.isZip64) {
             // RECORD
-            const zip64EOCDirectoryRecord = new BinaryWriter()
+            const zip64EOCDirectoryRecord = new BinaryStream()
                 .writeInt32(constants.SIG_ZIP64_EOCD)
                 .writeBigInt64(44)
                 .writeInt16(0x002D)
@@ -141,17 +140,19 @@ ZipTransformer.prototype = {
                 .writeBigInt64(Object.keys(this.entries).length)
                 .writeBigInt64(Object.keys(this.entries).length)
                 .writeBigInt64(this.centralSize)
-                .writeBigInt64(this.centralOffset);
-            ctrl.enqueue(zip64EOCDirectoryRecord.arrayBuffer);
-            this.offset += BigInt(zip64EOCDirectoryRecord.size);
+                .writeBigInt64(this.centralOffset)
+                .getByteArray();
+            ctrl.enqueue(zip64EOCDirectoryRecord);
+            this.offset += BigInt(zip64EOCDirectoryRecord.length);
             // LOCATOR
-            const zip64EOCDirectoryLocator = new BinaryWriter()
+            const zip64EOCDirectoryLocator = new BinaryStream()
                 .writeInt32(constants.SIG_ZIP64_EOCD_LOC)
                 .writeInt32(0)
                 .writeBigInt64(this.centralOffset + this.centralSize)
-                .writeInt32(1);
-            ctrl.enqueue(zip64EOCDirectoryLocator.arrayBuffer);
-            this.offset += BigInt(zip64EOCDirectoryLocator.size);
+                .writeInt32(1)
+                .getByteArray();
+            ctrl.enqueue(zip64EOCDirectoryLocator);
+            this.offset += BigInt(zip64EOCDirectoryLocator.length);
 
         }
         // END OF CENTRAL DIRECTORY RECORD
@@ -163,7 +164,7 @@ ZipTransformer.prototype = {
             centralSize = constants.ZIP64_MAGIC;
             centralOffset = constants.ZIP64_MAGIC;
         }
-        const endOfCentralDirectoryRecord = new BinaryWriter()
+        const endOfCentralDirectoryRecord = new BinaryStream()
             .writeInt32(constants.SIG_EOCD)
             .writeInt16(0)
             .writeInt16(0)
@@ -171,9 +172,10 @@ ZipTransformer.prototype = {
             .writeInt16(entriesSize)
             .writeInt32(centralSize)
             .writeInt32(centralOffset)
-            .writeInt16(0);
-        ctrl.enqueue(endOfCentralDirectoryRecord.arrayBuffer);
-        this.offset += BigInt(endOfCentralDirectoryRecord.size)
+            .writeInt16(0)
+            .getByteArray();
+        ctrl.enqueue(endOfCentralDirectoryRecord);
+        this.offset += BigInt(endOfCentralDirectoryRecord.length)
     },
     get isZip64() {
         return this.forceZip64 || Object.keys(this.entries).length > constants.ZIP64_MAGIC_SHORT || this.centralSize > constants.ZIP64_MAGIC || this.centralOffset > constants.ZIP64_MAGIC;
