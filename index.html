@@ -2,21 +2,21 @@
 <html lang="en" dir="ltr">
 <head>
     <meta charset="utf-8">
-    <title></title>
-    <script src="https://cdn.jsdelivr.net/npm/web-streams-polyfill@2.0.2/dist/ponyfill.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/streamsaver@2.0.3/StreamSaver.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/web-archive-stream"></script>
+    <title>WEB ARCHIVE STREAM</title>
 </head>
 <body>
-<!--<script src="https://cdn.jsdelivr.net/npm/web-archive-stream@0.1.0/dist/index.min.js"></script>-->
+<script src="https://cdn.jsdelivr.net/npm/web-streams-polyfill@2.0.2/dist/ponyfill.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/streamsaver@2.0.3/StreamSaver.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/web-archive-stream"></script>
 <script>
+    const { Archiver } = WebArchiveStream;
     window.download = function download() {
         const fileStream = streamSaver.createWriteStream('web-zip-stream.zip');
         const inputFileElement = document.getElementById('input');
         const fileList = [...inputFileElement.files];
         if (fileList.length === 0) return false;
 
-        const archiver = new WebArchiveStream.Archiver();
+        const archiver = new Archiver();
         const writer = archiver.stream.writable.getWriter();
 
         for (let file of fileList) {
