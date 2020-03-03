@@ -8,7 +8,8 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "noImplicitAny": true,
-    "experimentalDecorators": true
+    "experimentalDecorators": true,
+    "outDir": "./lib"
   },
   "include": [
     "src/**/*"
