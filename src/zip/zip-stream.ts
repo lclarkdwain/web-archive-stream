@@ -1,8 +1,6 @@
 import ZipTransformer from './zip-transformer'
 
-const ponyfill = WebStreamsPolyfill;
-
-class ZipStream extends (TransformStream || ponyfill.TransformStream) {
+class ZipStream extends TransformStream {
     constructor() {
         // @ts-ignore
         super(new ZipTransformer())

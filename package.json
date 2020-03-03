@@ -1,6 +1,6 @@
 {
   "name": "web-archive-stream",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "generate readable and writable archive file stream from the browser ",
   "main": "dist/index.js",
   "browser": "dist/index.min.js",
