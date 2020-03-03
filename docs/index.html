@@ -7,7 +7,7 @@
 <body>
 <script src="https://cdn.jsdelivr.net/npm/web-streams-polyfill@2.0.2/dist/ponyfill.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/streamsaver@2.0.3/StreamSaver.min.js"></script>
-<script src="../dist/index.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/web-archive-stream@0.1.0/dist/index.min.js"></script>
 <script>
     window.download = function download() {
         const fileStream = streamSaver.createWriteStream('web-zip-stream.zip');
@@ -16,12 +16,14 @@
         if (fileList.length === 0) return false;
 
         const archiver = new WebArchiveStream.Archiver();
+        const writer = archiver.stream.writable.getWriter();
 
         for (let file of fileList) {
-            archiver.file(file);
+            writer.write(file);
         }
 
-        archiver.pipe(fileStream)
+        archiver.stream.readable.pipeTo(fileStream);
+        writer.close()
     }
 </script>
 <div>

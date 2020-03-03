@@ -1,17 +1,17 @@
 {
   "name": "web-archive-stream",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "generate readable and writable archive file stream from the browser ",
-  "main": "dist/index.cjs.js",
-  "module": "dist/index.esm.js",
-  "browser": "dist/index.umd.js",
+  "main": "dist/index.js",
+  "browser": "dist/index.min.js",
+  "module": "dist/index.mjs",
   "types": "dist/types/index.d.ts",
   "files": [
     "dist",
     "src"
   ],
   "scripts": {
-    "build": "rollup -c rollup.config.ts && tsc"
+    "build": "rollup -c rollup.config.ts && tsc --project . --emitDeclarationOnly"
   },
   "repository": {
     "type": "git",

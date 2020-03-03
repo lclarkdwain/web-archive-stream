@@ -9,6 +9,8 @@
     "allowSyntheticDefaultImports": true,
     "noImplicitAny": true,
     "experimentalDecorators": true,
+    "declaration": true,
+    "declarationMap": true,
     "outDir": "./lib"
   },
   "include": [
