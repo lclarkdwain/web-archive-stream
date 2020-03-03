@@ -1,9 +1,9 @@
 export default  {
-    createByteArray(data, byteLength, mergeByteArray = []) {
+    createByteArray(data: any, byteLength: any, mergeByteArray: ArrayLike<number> = []) {
         let byteArray = new Uint8Array(byteLength);
         const dataView = new DataView(byteArray.buffer);
 
-        const isArrayLike = function(data) {
+        const isArrayLike = function(data: any) {
             // Uint8Array is not instance of Array
             return Array.isArray(data) || (!!data &&
                 typeof data == 'object' &&
@@ -46,16 +46,16 @@ export default  {
         }
         return byteArray
     },
-    createByte(data) {
+    createByte(data: any) {
         return this.createByteArray(data, 1)
     },
-    createShort(data) {
+    createShort(data: any) {
         return this.createByteArray(data, 2)
     },
-    createLong(data) {
+    createLong(data: any) {
         return this.createByteArray(data, 4)
     },
-    createLongLong(data) {
+    createLongLong(data: any) {
         return this.createByteArray(data, 8)
     }
 };

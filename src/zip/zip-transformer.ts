@@ -1,29 +1,28 @@
 import Crc32 from './crc32.js'
-import constants from './constants.js'
+import constants from './constants'
 import BinaryStream from '../util/binary-stream.js'
-import { getDateTimeDOS } from './util.js'
+import { getDateTimeDOS } from './util'
 
 const textEncoder = new TextEncoder();
 
-function ZipTransformer() {
-    this.forceZip64 = false;
-    this.entry = null;
-    this.entries = {};
+class ZipTransformer {
+    private forceZip64 = false;
+    private entry: any = null;
+    private entries: any = {};
 
-    this.offset = BigInt(0);
-    this.centralOffset = BigInt(0);
-    this.centralSize = BigInt(0);
-}
+    private offset: bigint = BigInt(0);
+    private centralOffset: bigint = BigInt(0);
+    private centralSize: bigint = BigInt(0);
 
-ZipTransformer.prototype = {
-    async transform(entry, ctrl) {
+
+    private async transform(entry: any, ctrl: any) {
         let name = entry.name.trim();
         const date = new Date(entry.lastModified ? entry.lastModified : new Date());
 
         const nameBuffer = textEncoder.encode(name);
         // define new entry
         this.entry = this.entries[name] = {
-            offset: this.offset,
+            offset: this.offset as any,
             crc: new Crc32(),
             compressedSize: BigInt(0),
             size: BigInt(0),
@@ -77,14 +76,15 @@ ZipTransformer.prototype = {
                 .writeInt32(this.entry.compressedSize)
                 .writeInt32(this.entry.size);
         }
-        dataDescriptor = dataDescriptor.getByteArray();
-        ctrl.enqueue(dataDescriptor);
-        this.offset += this.entry.size + BigInt(dataDescriptor.length)
-    },
-    flush(ctrl) {
+        let dataDescriptorByteArray = dataDescriptor.getByteArray();
+        ctrl.enqueue(dataDescriptorByteArray);
+        this.offset += this.entry.size + BigInt(dataDescriptorByteArray.length)
+    }
+    flush(ctrl: any) {
         // CENTRAL DIRECTORY FILE HEADER
         this.centralOffset = this.offset;
-        Object.keys(this.entries).forEach(function(key) {
+        Object.keys(this.entries).forEach(function(key: any) {
+            // @ts-ignore
             const entry = this.entries[key];
             let fileOffset = entry.offset;
             let size = entry.size;
@@ -125,7 +125,7 @@ ZipTransformer.prototype = {
                 .getByteArray();
             ctrl.enqueue(centralDirectoryFileHeader);
             this.offset += BigInt(centralDirectoryFileHeader.length);
-            }.bind(this));
+        }.bind(this));
         this.centralSize = this.offset - this.centralOffset;
         // ZIP64 END OF CENTRAL DIRECTORY RECORD / LOCATOR
         if (this.isZip64) {
@@ -161,7 +161,9 @@ ZipTransformer.prototype = {
         let centralOffset = this.centralOffset;
         if (this.isZip64) {
             entriesSize = constants.ZIP64_MAGIC_SHORT;
+            // @ts-ignore
             centralSize = constants.ZIP64_MAGIC;
+            // @ts-ignore
             centralOffset = constants.ZIP64_MAGIC;
         }
         const endOfCentralDirectoryRecord = new BinaryStream()
@@ -176,10 +178,10 @@ ZipTransformer.prototype = {
             .getByteArray();
         ctrl.enqueue(endOfCentralDirectoryRecord);
         this.offset += BigInt(endOfCentralDirectoryRecord.length)
-    },
+    }
     get isZip64() {
         return this.forceZip64 || Object.keys(this.entries).length > constants.ZIP64_MAGIC_SHORT || this.centralSize > constants.ZIP64_MAGIC || this.centralOffset > constants.ZIP64_MAGIC;
     }
-};
+}
 
 export default ZipTransformer

@@ -2,9 +2,16 @@
   "name": "web-archive-stream",
   "version": "0.0.1",
   "description": "generate readable and writable archive file stream from the browser ",
-  "main": "src/index.js",
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.esm.js",
+  "browser": "dist/index.umd.js",
+  "types": "dist/types/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "rollup -c rollup.config.ts && tsc"
   },
   "repository": {
     "type": "git",
@@ -19,5 +26,13 @@
   "bugs": {
     "url": "https://github.com/aNulliHate/web-archive-stream/issues"
   },
-  "homepage": "https://github.com/aNulliHate/web-archive-stream#readme"
+  "homepage": "https://github.com/aNulliHate/web-archive-stream#readme",
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^11.0.2",
+    "@rollup/plugin-typescript": "^3.0.0",
+    "@types/node": "^13.7.7",
+    "rollup": "^1.32.0",
+    "rollup-plugin-terser": "^5.2.0",
+    "typescript": "^3.8.3"
+  }
 }
