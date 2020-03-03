@@ -5,23 +5,23 @@
     <title></title>
 </head>
 <body>
-<script src="https://cdn.jsdelivr.net/npm/web-streams-polyfill@2.0.2/dist/polyfill.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/web-streams-polyfill@2.0.2/dist/ponyfill.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/streamsaver@2.0.3/StreamSaver.min.js"></script>
-<script type="module">
-    import WebZipStream from "https://cdn.jsdelivr.net/npm/web-archive-stream@0.0.1/src/index.min.js"
+<script src="../dist/index.js"></script>
+<script>
     window.download = function download() {
         const fileStream = streamSaver.createWriteStream('web-zip-stream.zip');
         const inputFileElement = document.getElementById('input');
         const fileList = [...inputFileElement.files];
         if (fileList.length === 0) return false;
 
-        const archive = new WebZipStream('zip').archiver();
+        const archiver = new WebArchiveStream.Archiver();
 
         for (let file of fileList) {
-            archive.file(file);
+            archiver.file(file);
         }
 
-        archive.pipe(fileStream)
+        archiver.pipe(fileStream)
     }
 </script>
 <div>
