@@ -12,17 +12,16 @@
     "experimentalDecorators": true,
     "declaration": true,
     "declarationMap": true,
-    "outDir": "./lib",
+    "outDir": "lib",
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "src/*"
+      "*": [
+        "node_modules/*"
       ]
     },
     "lib": [
       "esnext",
-      "dom",
-      "dom.iterable"
+      "dom"
     ]
 },
   "include": [
