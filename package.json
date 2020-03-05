@@ -10,7 +10,9 @@
     "dist"
   ],
   "scripts": {
-    "build": "rollup -c rollup.config.ts && tsc --project . --emitDeclarationOnly"
+    "build": "rollup -c rollup.config.ts && npm run build:types",
+    "watch": "rollup -c rollup.config.ts -w",
+    "build:types": "tsc --project . --emitDeclarationOnly"
   },
   "repository": {
     "type": "git",

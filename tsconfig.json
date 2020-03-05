@@ -3,8 +3,10 @@
   "compilerOptions": {
     "target": "esnext",
     "module": "esnext",
+    "strict": true,
     "importHelpers": true,
     "moduleResolution": "node",
+    "allowJs": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "sourceMap": true,
