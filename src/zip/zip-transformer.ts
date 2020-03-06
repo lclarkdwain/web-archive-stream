@@ -1,25 +1,13 @@
+import ZipTransformerEntry from './zip-transformer-entry'
 import Crc32 from './crc32.js'
 import constants from './constants'
 import ArrayBufferStream from '../util/arraybuffer-stream'
 import { getDateTimeDOS } from './util'
 
-const textEncoder = new TextEncoder();
-
-interface IEntry {
-    offset: bigint;
-    crc: Crc32;
-    compressedSize: bigint;
-    size: bigint;
-    nameBuffer: Uint8Array;
-    date: Date;
-    isZip64(): boolean;
-    extra: ArrayLike<number>;
-}
-
 class ZipTransformer implements Transformer {
     private forceZip64: boolean;
-    private entry: IEntry;
-    private entries: {[name: string]: IEntry};
+    private entry?: ZipTransformerEntry;
+    private entries: Map<string, ZipTransformerEntry>;
 
     private offset: bigint;
     private centralOffset: bigint;
@@ -27,46 +15,31 @@ class ZipTransformer implements Transformer {
 
     constructor() {
         this.forceZip64 = false;
-        this.entry = {} as IEntry;
-        this.entries = {};
+        this.entries = new Map<string, ZipTransformerEntry>();
 
         this.offset = BigInt(0);
         this.centralOffset = BigInt(0);
         this.centralSize = BigInt(0);
     }
 
-    async transform (entry: any, ctrl: TransformStreamDefaultController) {
-        let name = entry.name.trim();
-        const date = new Date(entry.lastModified ? entry.lastModified : new Date());
-
-        const nameBuffer = textEncoder.encode(name);
-        // define new entry
-        this.entry = this.entries[name] = {
-            offset: this.offset,
-            crc: new Crc32(),
-            compressedSize: BigInt(0),
-            size: BigInt(0),
-            nameBuffer,
-            date,
-            isZip64(): boolean {
-                return this.compressedSize > constants.ZIP64_MAGIC || this.size > constants.ZIP64_MAGIC
-            },
-            extra: new Uint8Array(0)
-        };
+    async transform(entry: any, ctrl: TransformStreamDefaultController) {
+        // DEFINE ENTRY
+        this.entry = this.entries.set(entry.name, new ZipTransformerEntry(entry.name, this.offset, entry)).get(entry.name)!;
+        console.log(this, this.entry, this.entries);
         // LOCAL FILE HEADER
         // 30 bytes + file name length + extra field length
-        const localFileHeader = new ArrayBufferStream(30 + nameBuffer.length + this.entry.extra.length)
+        const localFileHeader = new ArrayBufferStream(30 + this.entry.nameBuffer.length + this.entry.extra.length)
             .writeInt32(constants.SIG_LFH)
             .writeInt16(0x002D)
             .writeInt16(0x0808)
             .writeInt16(0x0000)
-            .writeInt32(getDateTimeDOS(date)) // 4 bytes
+            .writeInt32(getDateTimeDOS(this.entry.date)) // 4 bytes
             .writeInt32(0x00000000)
             .writeInt32(0x00000000)
             .writeInt32(0x00000000)
-            .writeInt16(nameBuffer.length)
+            .writeInt16(this.entry.nameBuffer.length)
             .writeInt16(0)
-            .writeBytes(nameBuffer)
+            .writeBytes(this.entry.nameBuffer)
             .writeBytes(this.entry.extra);
         ctrl.enqueue(localFileHeader.getTypedArray());
         this.offset += BigInt(localFileHeader.byteLength);
@@ -102,14 +75,12 @@ class ZipTransformer implements Transformer {
     flush(ctrl: TransformStreamDefaultController) {
         // CENTRAL DIRECTORY FILE HEADER
         this.centralOffset = this.offset;
-        Object.keys(this.entries).forEach(name => {
-            // @ts-ignore
-            const entry = this.entries[name];
+        this.entries.forEach((entry: ZipTransformerEntry) => {
             let fileOffset = entry.offset;
             let size = entry.size;
             let compressedSize = entry.compressedSize;
 
-            if (entry.isZip64 || entry.offset > constants.ZIP64_MAGIC) {
+            if (entry.isZip64() || entry.offset > constants.ZIP64_MAGIC) {
                 fileOffset = BigInt(constants.ZIP64_MAGIC);
                 size = BigInt(constants.ZIP64_MAGIC);
                 compressedSize = BigInt(constants.ZIP64_MAGIC);
@@ -159,8 +130,8 @@ class ZipTransformer implements Transformer {
                 .writeInt16(0x002D)
                 .writeInt32(0)
                 .writeInt32(0)
-                .writeBigInt64(Object.keys(this.entries).length)
-                .writeBigInt64(Object.keys(this.entries).length)
+                .writeBigInt64(this.entries.size)
+                .writeBigInt64(this.entries.size)
                 .writeBigInt64(this.centralSize)
                 .writeBigInt64(this.centralOffset);
             ctrl.enqueue(zip64EOCDirectoryRecord.getTypedArray());
@@ -177,7 +148,7 @@ class ZipTransformer implements Transformer {
 
         }
         // END OF CENTRAL DIRECTORY RECORD
-        let entriesSize = Object.keys(this.entries).length;
+        let entriesSize = this.entries.size;
         let centralSize = this.centralSize;
         let centralOffset = this.centralOffset;
         if (this.isZip64()) {
@@ -200,7 +171,7 @@ class ZipTransformer implements Transformer {
         this.offset += BigInt(endOfCentralDirectoryRecord.byteLength)
     }
     isZip64() {
-        return this.forceZip64 || Object.keys(this.entries).length > constants.ZIP64_MAGIC_SHORT || this.centralSize > constants.ZIP64_MAGIC || this.centralOffset > constants.ZIP64_MAGIC;
+        return this.forceZip64 || this.entries.size > constants.ZIP64_MAGIC_SHORT || this.centralSize > constants.ZIP64_MAGIC || this.centralOffset > constants.ZIP64_MAGIC;
     }
 }
 
